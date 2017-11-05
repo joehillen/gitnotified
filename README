@@ -1,0 +1,17 @@
+Usage: gitnotified [COMMAND]
+
+Show a desktop notification when there is a new commit to a remote git branch.
+
+Commands:
+  daemon     Keep process runnings and recheck every 5 minutes (DEFAULT)
+  once       Check each repo and exit
+  clean      Remove the tracking note from the git repository
+
+Configuration:
+ The config file is /home/joe/.config/gitnotified.conf
+
+ The config format is:
+
+     path/to/repo remote branch # comments are allowed
+
+ remote and branch are optional and default to origin and master
