@@ -8,7 +8,7 @@ Commands:
   clean      Remove the tracking note from the git repository
 
 Configuration:
- The config file is /home/joe/.config/gitnotified.conf
+ The config file is $XDG_CONFIG_DIR/gitnotified.conf
 
  The config format is:
 
