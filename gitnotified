@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# Joe Hillenbrand <joehillen@gmail.com> © 2017
+# MIT License
+
+# kill children on exit
+CONFIGFILE="${XDG_CONFIG_DIR:-${HOME}/.config}/gitnotified.conf"
+
+usage() {
+echo  >&2 "\
+Usage: gitnotified [COMMAND]
+
+Show a desktop notification when there is a new commit to a remote git branch.
+
+Commands:
+  daemon     Keep process runnings and recheck every 5 minutes (DEFAULT)
+  once       Check each repo and exit
+  clean      Remove the tracking note from the git repository
+
+Configuration:
+ The config file is $CONFIGFILE
+
+ The config format is:
+
+     path/to/repo remote branch # comments are allowed
+
+ remote and branch are optional and default to origin and master
+"
+exit 1
+}
+
+check() {
+    dir=$1
+    remote=$2
+    branch=$3
+
+    # use eval to expand ~
+    eval cd $dir
+    if [ $? -eq 0 ]; then
+        git fetch $remote
+        rev=$(git rev-parse $remote/$branch)
+        if [[ -z $(git notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
+            when=$(git show -s --format=%cr $rev)
+            body=$(git show -s --format=full $rev)
+            summary="$(pwd | sed s,$HOME,~,) ($remote/$branch) $when"
+            echo '========================================='
+            echo -e "$summary"
+            echo -e "$body"
+            echo '========================================='
+            if [[ $(type -P notify-send) ]] ; then
+                # sanitize
+                body=${body//&/&amp;}
+                body=${body//</&lt;}
+                body=${body//>/&gt;}
+                notify-send -a gitnotified "$summary" "$body"
+            elif [[ $(type -P terminal-notifier) ]]; then
+                title="$(pwd | sed s,$HOME,~,) has a new commit"
+                subtitle="$remote/$branch - $when"
+                terminal-notifier -title "$title" -subtitle "$subtitle" -message "$body"
+            fi
+            git notes --ref=gitnotified add $rev -m notified
+        fi
+    fi
+}
+
+daemon() {
+    dir=$1
+    remote=$2
+    branch=$3
+    while :; do
+        check $dir $remote $branch
+        sleep 300 # 5 minutes
+    done
+}
+
+COMMAND=${1:-daemon}
+
+# sanitize config
+# remove comments
+# |                              ensure a trailing newline
+# |                              |          remote blank lines
+# V                              V          V
+{ sed -e 's/#.*//' $CONFIGFILE ; echo ; } | sed -e '/^\s*$/d' | (
+    while read dir remote branch; do
+        remote=${remote:-origin}
+        branch=${branch:-master}
+        case $COMMAND in
+            daemon)
+                trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT QUIT
+                echo "Watching $dir ($remote/$branch)..."
+                daemon $dir $remote $branch &
+                sleep 1 # stagger each thread by a second
+                ;;
+            once)
+                echo "$dir ($remote/$branch)..."
+                check $dir $remote $branch
+                ;;
+            clean)
+                echo "$dir ($remote/$branch)..."
+                eval cd $dir && git notes --ref=gitnotified remove $remote/$branch
+                ;;
+            *)
+                usage
+                ;;
+        esac
+    done
+    wait
+)
