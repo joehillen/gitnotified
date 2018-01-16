@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Joe Hillenbrand <joehillen@gmail.com> © 2017
+# Joe Hillenbrand <joehillen@gmail.com> © 2018
 # MIT License
 
 # kill children on exit
@@ -41,7 +41,7 @@ check() {
         rev=$(git rev-parse $remote/$branch)
         if [[ -z $(git notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
             when=$(git show -s --format=%cr $rev)
-            body=$(git show -s --format=full $rev)
+            body=$(git show -s --no-show-signatures --format=full $rev)
             summary="$(pwd | sed s,$HOME,~,) ($remote/$branch) $when"
             echo '========================================='
             echo -e "$summary"
