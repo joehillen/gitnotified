@@ -29,6 +29,16 @@ Configuration:
 exit 1
 }
 
+mkbody () {
+    local rev=$1
+    local params="--no-show-signature --format=full --shortstat --no-decorate --abbrev-commit"
+    if [[ $(git rev-list --no-walk --count --merges $rev) = 1 ]]; then # if this is a merge commit
+        git --no-pager log $params ${rev}^..${rev}
+    else
+        git --no-pager show $params $rev
+    fi
+}
+
 check() {
     dir=$1
     remote=$2
@@ -39,9 +49,9 @@ check() {
     if [ $? -eq 0 ]; then
         git fetch $remote
         rev=$(git rev-parse $remote/$branch)
-        if [[ -z $(git notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
-            when=$(git show -s --format=%cr $rev)
-            body=$(git show -s --no-show-signatures --format=full $rev)
+        if [[ -z $(git --no-pager notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
+            when=$(git --no-pager show --no-show-signature --format=%cr $rev)
+            body=$(mkbody $rev)
             summary="$(pwd | sed s,$HOME,~,) ($remote/$branch) $when"
             echo '========================================='
             echo -e "$summary"
