@@ -50,7 +50,7 @@ check() {
         git fetch $remote
         rev=$(git rev-parse $remote/$branch)
         if [[ -z $(git --no-pager notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
-            when=$(git --no-pager show --no-show-signature --format=%cr $rev)
+            when=$(git --no-pager show -s --no-show-signature --format=%cr $rev)
             body=$(mkbody $rev)
             summary="$(pwd | sed s,$HOME,~,) ($remote/$branch) $when"
             echo '========================================='
@@ -88,7 +88,7 @@ COMMAND=${1:-daemon}
 # sanitize config
 # remove comments
 # |                              ensure a trailing newline
-# |                              |          remote blank lines
+# |                              |          remove blank lines
 # V                              V          V
 { sed -e 's/#.*//' $CONFIGFILE ; echo ; } | sed -e '/^\s*$/d' | (
     while read dir remote branch; do
