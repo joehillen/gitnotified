@@ -79,7 +79,7 @@ daemon() {
     branch=$3
     while :; do
         check $dir $remote $branch
-        sleep 300 # 5 minutes
+        sleep $((270 + RANDOM % 60)) # ~5 minutes
     done
 }
 
