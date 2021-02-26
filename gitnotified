@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Joe Hillenbrand <joehillen@gmail.com> © 2018
+# Joe Hillenbrand <joehillen@gmail.com> © 2021
 # MIT License
 
 # kill children on exit
@@ -40,14 +40,15 @@ mkbody () {
 }
 
 check() {
+
     dir=$1
     remote=$2
     branch=$3
 
     # use eval to expand ~
     eval cd $dir
-    if [ $? -eq 0 ]; then
-        git fetch $remote
+    if [[ $? -eq 0 ]]; then
+        git fetch --all
         rev=$(git rev-parse $remote/$branch)
         if [[ -z $(git --no-pager notes --ref=gitnotified show $rev 2>/dev/null) ]]; then
             when=$(git --no-pager show -s --no-show-signature --format=%cr $rev)
@@ -70,6 +71,7 @@ check() {
             fi
             git notes --ref=gitnotified add $rev -m notified
         fi
+        git fetch $remote $branch:$branch
     fi
 }
 
