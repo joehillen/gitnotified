@@ -79,8 +79,12 @@ daemon() {
     dir=$1
     remote=$2
     branch=$3
+
     while :; do
-        check $dir $remote $branch
+        check $dir $remote $branch \
+            > >(trap "" INT TERM; sed -e 's,^,'"$dir"': ,') \
+            2> >(trap "" INT TERM; sed -e 's,^,'"$dir"': ,' >&2)
+
         sleep $((270 + RANDOM % 60)) # ~5 minutes
     done
 }
