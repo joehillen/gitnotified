@@ -3,7 +3,7 @@
 # Joe Hillenbrand <joehillen@gmail.com> © 2021
 # MIT License
 
-# kill children on exit
+export GIT_SSH_COMMAND="ssh -o ControlPath=none"
 CONFIGFILE="${XDG_CONFIG_DIR:-${HOME}/.config}/gitnotified.conf"
 
 usage() {
@@ -98,6 +98,7 @@ COMMAND=${1:-daemon}
         branch=${branch:-master}
         case $COMMAND in
             daemon)
+                # kill children on exit
                 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT QUIT
                 echo "Watching $dir ($remote/$branch)..."
                 daemon $dir $remote $branch &
